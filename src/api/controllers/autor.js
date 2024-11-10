@@ -54,26 +54,24 @@ const updateAutor = async (req, res, next) => {
     const newAutor = new Autor(req.body);
     newAutor._id = id;
     newAutor.books = [...oldAutor.books, ...req.body.books];
-    //!elimino datos duplicados, si hay, en el array:
-    /*1.creo un nuevo Set para chequear books duplicados. Ya que Set no funciona usando objetos (los id son objetos), tengo que hacer:
-    2. convierto los id en string usando un ciclo "for of", para wue Set los pueda leer
-    3.con Set chequeo estos id convertidos a string, y me aseguro de que no estén duplicados
-    4.creo un nuevo array llamado arrayFinalBooks donde pasaré los id originales (de tipo objeto) que NO estan duplicados
-       */
-    const idBooksSet = new Set(); //1
-    const arrayFinalBooks = []; //4
 
-    for (let id of newAutor.books) {
-      const idString = id.toString(); //2
-      const checkDuplicados = idBooksSet.has(idString); //devuelve true si ya tiene el id, devuelve FALSE si no lo tiene
-      if (!checkDuplicados) {
-        idBooksSet.add(idString); //añado a Set el id String
-        arrayFinalBooks.push(id); //añado el id original en el array final
-      } else {
-        console.log('Estas añadiendo un duplicado');
-      }
-    }
-    newAutor.books = arrayFinalBooks;
+    //?START CHECK DUPLICADOS: chequeo que no hayan datos repetidos en el campo alumnos:
+    const idBooksSet = new Set(); //utilizo Set para chequear duplicados
+    const arrayFinalBooks = []; //creo un array donde guardaré los datos no duplicados
+    //con un ciclo forEach añado a Set cada alumno de newCasa. El metodo .add() permite añadir el dato solo si no se ha añadido previamente, evitando duplicados
+    newAutor.books.forEach((idBook) => idBooksSet.add(idBook.toString()));
+
+    //*ejemplo de codigo usando ciclo for in en vez de ciclo foreach
+    /*  for (let id of newAutor.books) {
+      const idString = id.toString(); //convierto el id en string para que me lo lea
+        idBooksSet.add(idString); //añado a Set el id String, si ya no se añadió
+    } */
+
+    //cojo los datos de Set y los añado al array arrayAlumnosFinal
+    idBooksSet.forEach((id) => arrayFinalBooks.push(id));
+    newAutor.books = arrayFinalBooks; //paso arrayAlumnosFinal a newCasa.alumnos, para actualizarlo y quitarle posibles duplicados
+    //?---END CHECK DUPLICADOS
+
     const updateAutor = await Autor.findByIdAndUpdate(id, newAutor, {
       new: true
     });
